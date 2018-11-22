@@ -1,0 +1,6 @@
+/public/storage
+/vendor
+/.idea
+composer.lock
+.env
+
