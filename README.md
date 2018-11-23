@@ -1,8 +1,20 @@
-# wechatIntelligentMarketing
+# phoneDCS | 手机群控系统
 
 #### 前言
 
-...
+无言...
+
+
+
+#### 简介
+
+`phoneGCS`全称`phone group control system`，顾名思义即是一款手机(`Android`)群控系统，基于`Cli`形式运行，支持自定义的编排任务、任务录制任务群控。主要有如下特性：
+
+- 自定义任务
+- 自定义频率控制
+- 指定编排任务
+- 指定编排任务执行数量
+- 查看设备主要信息
 
 
 
