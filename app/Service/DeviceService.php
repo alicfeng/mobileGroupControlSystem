@@ -10,6 +10,15 @@ use App\Common\Constant\Strings;
 
 class DeviceService
 {
+    /**
+     * @functionName   获取设备序列号
+     * @description    获取设备序列号
+     * @version        v1.0.0
+     * @author         Alicfeng
+     * @datetime       18-11-22 下午3:58
+     * @return array|bool
+     * @response       []
+     */
     public function deviceNoList()
     {
         $deviceList = [];
@@ -22,10 +31,26 @@ class DeviceService
         // 重组设备
         foreach ($result as $device) {
             if (Strings::NULL == $device) continue;
-            array_push($deviceList, trim(str_replace(['device', ' '], ['', ''],$device)));
+            array_push($deviceList, trim(str_replace(['device', ' '], ['', ''], $device)));
         }
 
         unset($result, $status);
         return $deviceList;
+    }
+
+
+    public function devicesInfo($devicesNo = [])
+    {
+        if (!is_array($devicesNo)) {
+            return false;
+        }
+        $messages = [];
+        foreach ($devicesNo as $deviceNo) {
+            $command = str_replace('{deviceNo}', $deviceNo, AdbCmd::GET_DEVICE_INFO);
+            exec($command, $result, $status);
+            if (0 != $status) continue;
+            array_push($messages, ['deviceNo' => $deviceNo, 'product' => trim($result[0])]);
+        }
+        return $messages;
     }
 }
