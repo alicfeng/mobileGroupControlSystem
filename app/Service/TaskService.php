@@ -5,7 +5,7 @@
 
 namespace App\Service;
 
-use Log;
+use App\Common\System\CliLog;
 
 
 use App\Jobs\TaskQueue;
@@ -18,32 +18,25 @@ class TaskService
      * @version        v1.0.0
      * @author         Alicfeng
      * @datetime       18-11-23 上午10:34
-     * @param string $taskCode 任务编排编码
+     * @param string $playbook 任务编排编码
      * @param array $devices 设备列表
      * @param integer $frequency 操控频率
      * @return bool
      * @response       []
      */
-    public function run($taskCode, $devices, $frequency)
+    public function run($playbook, $devices, $frequency)
     {
-        echo "{$taskCode} playbook running...";
-        Log::info("{$taskCode} playbook running...");
+        CliLog::info("{$playbook} playbook running");
 
-        $playbookFile = PlaybookService::path($taskCode);
-        if (!file_exists($playbookFile)) {
-            return false;
+        foreach ($devices as $deviceItem) {
+            CliLog::info("{$deviceItem} deploying  {$playbook} playbook");
+            // 异步执行 | 提高并发
+            TaskQueue::dispatch($playbook, $deviceItem);
+            // 频率控制
+            sleep($frequency);
         }
 
-        while (true) {
-
-            foreach ($devices as $deviceItem) {
-                TaskQueue::dispatch($playbookFile, $deviceItem);
-                // 频率控制
-                sleep($frequency);
-            }
-
-            sleep(25);
-        }
+        CliLog::info("{$playbook} playbook run finished");
         return true;
     }
 }

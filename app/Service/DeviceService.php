@@ -38,7 +38,16 @@ class DeviceService
         return $deviceList;
     }
 
-
+    /**
+     * @functionName   获取连接设备的信息
+     * @description    设备号 | 设备名称
+     * @version        v1.0.0
+     * @author         Alicfeng
+     * @datetime       18-11-23 下午6:45
+     * @param array $devicesNo
+     * @return array|bool
+     * @response       []
+     */
     public function devicesInfo($devicesNo = [])
     {
         if (!is_array($devicesNo)) {

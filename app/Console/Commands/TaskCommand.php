@@ -3,33 +3,25 @@
 namespace App\Console\Commands;
 
 use App\Common\Constant\Strings;
+use App\Common\System\CliLog;
 use App\Service\DeviceService;
+use App\Service\PlaybookService;
 use App\Service\TaskService;
 use Illuminate\Console\Command;
 use Log;
 
 class TaskCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'task:do {help?} {--devices=true} {--taskCode=} {--amount=} {--frequency=}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
+    protected $signature = 'task:do {help?} {--devices=true} {--playbook=} {--amount=} {--frequency=}';
+    protected $description = 'playbook task run';
 
     private $deviceService;
+    private $playbookService;
     private $taskService;
     private $deviceList;
 
     private $help      = null;// 帮助
-    private $taskCode  = null;// 任务编码
+    private $playbook  = null;// 任务编码
     private $devices   = true;// 设备
     private $amount    = 0;// 任务数量
     private $frequency = 0;// 频率 | 单位s | 默认0s
@@ -38,12 +30,14 @@ class TaskCommand extends Command
      * TaskCommand constructor.
      * @param DeviceService $deviceService
      * @param TaskService $taskService
+     * @param PlaybookService $playbookService
      */
-    public function __construct(DeviceService $deviceService, TaskService $taskService)
+    public function __construct(DeviceService $deviceService, TaskService $taskService, PlaybookService $playbookService)
     {
         parent::__construct();
-        $this->deviceService = $deviceService;
-        $this->taskService   = $taskService;
+        $this->deviceService   = $deviceService;
+        $this->taskService     = $taskService;
+        $this->playbookService = $playbookService;
     }
 
     /**
@@ -56,7 +50,9 @@ class TaskCommand extends Command
         $this->init();
         $this->taskMessage();
         $this->checkTaskAmount();
-        $this->taskService->run($this->taskCode, $this->deviceList, $this->frequency);
+        $this->checkPlaybook();
+
+        $this->taskService->run($this->playbook, $this->deviceList, $this->frequency);
         return true;
     }
 
@@ -68,7 +64,7 @@ class TaskCommand extends Command
         exit("usage:\ntask:do 
         help
         --devices  view devices main info
-        --taskCode=playbook code
+        --playbook=playbook code
         --amount=task amount
         --frequency=execute task frequency | s\n");
     }
@@ -78,7 +74,7 @@ class TaskCommand extends Command
      */
     private function init()
     {
-        $this->taskCode = $this->option('taskCode');
+        $this->playbook = $this->option('playbook');
         $this->amount   = $this->option('amount');
         $frequency      = $this->option('frequency');
         $frequency ? $this->frequency = $frequency : null;
@@ -96,8 +92,8 @@ class TaskCommand extends Command
         }
 
         // check任务编码
-        if (Strings::NULL == $this->taskCode || null == $this->taskCode) {
-            echo "taskCode can not be empty\n";
+        if (Strings::NULL == $this->playbook || null == $this->playbook) {
+            echo "playbook can not be empty\n";
             $this->help();
         }
 
@@ -118,10 +114,10 @@ class TaskCommand extends Command
      */
     private function taskMessage()
     {
-        echo "Task main message :\n";
-        echo "taskCode\t{$this->taskCode}\n";
-        echo "amount\t\t{$this->amount}\n";
-        echo "frequency\t{$this->frequency}\n";
+        CliLog::info("Task main message :\n");
+        CliLog::info("playbook\t{$this->playbook}\n");
+        CliLog::info("amount\t\t{$this->amount}\n");
+        CliLog::info("frequency\t{$this->frequency}\n");
     }
 
     /**
@@ -159,6 +155,22 @@ class TaskCommand extends Command
         if ($this->amount > count($this->deviceList)) {
             Log::warning('warning ~ the task amount greater than device amount');
             exit("warning ~ the task amount greater than device amount\n");
+        }
+    }
+
+    /**
+     * @functionName   checkPlaybook
+     * @description    checkPlaybook
+     * @version        v1.0.0
+     * @author         Alicfeng
+     * @datetime       18-11-23 下午6:50
+     * @response       []
+     */
+    private function checkPlaybook()
+    {
+        if (false == $this->playbookService->check($this->playbook)) {
+            Log::warning('the task of playbook not exist');
+            exit("the task of playbook not exist\n");
         }
     }
 }
