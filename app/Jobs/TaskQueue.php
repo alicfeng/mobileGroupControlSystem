@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Common\Command\AdbCmd;
+use App\Common\Command\PyCmd;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -17,28 +18,24 @@ class TaskQueue implements ShouldQueue
     // 重试3次
     protected $tries = 3;
 
-    private $taskList;
+    private $playbookFile;
     private $device;
 
-    public function __construct($taskList, $device)
+    public function __construct($playbookFile, $device)
     {
-        $this->taskList = $taskList;
-        $this->device   = $device;
+        $this->playbookFile = $playbookFile;
+        $this->device       = $device;
     }
 
 
     public function handle()
     {
-        foreach ($this->taskList as $task) {
-            $command = AdbCmd::BASIC_ADB . " -s {$this->device} shell " . $task;
-            exec($command, $result, $status);
-            Log::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE));
-
-            sleep(3);
-            // 指令执行失败 队列失败重试
-            if (0 != $status) {
-                $this->fail();
-            }
+        $command = PyCmd::adbRecordPlay($this->playbookFile);
+        exec($command, $result, $status);
+        Log::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE));
+        // 指令执行失败 队列失败重试
+        if (0 != $status) {
+            $this->fail();
         }
     }
 }

@@ -135,12 +135,15 @@ class TaskCommand extends Command
     private function devicesInfo()
     {
         if (null == $this->devices) {
-            $devices = $this->deviceService->devicesInfo($this->deviceList);
-            if (false != $devices) {
-                foreach ($devices as $deviceItem) {
-                    echo "{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n";
-                    Log::info("{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n");
+            while (true) {
+                $devices = $this->deviceService->devicesInfo($this->deviceList);
+                if (false != $devices) {
+                    foreach ($devices as $deviceItem) {
+                        echo time() . "\t" . "{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n";
+                        Log::info("{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n");
+                    }
                 }
+                sleep(1);
             }
             exit(0);
         }

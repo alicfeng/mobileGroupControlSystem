@@ -26,16 +26,24 @@ class TaskService
      */
     public function run($taskCode, $devices, $frequency)
     {
-        echo "{$frequency} playbook running...";
-        Log::info("{$frequency} playbook running...");
-        $taskList = config('playbook.' . $taskCode);
-        if (null == $taskList) {
+        echo "{$taskCode} playbook running...";
+        Log::info("{$taskCode} playbook running...");
+
+        $playbookFile = PlaybookService::path($taskCode);
+        if (!file_exists($playbookFile)) {
             return false;
         }
-        foreach ($devices as $deviceItem) {
-            TaskQueue::dispatch($taskList, $deviceItem);
-            // 频率控制
-            sleep($frequency);
+
+        while (true) {
+
+            foreach ($devices as $deviceItem) {
+                TaskQueue::dispatch($playbookFile, $deviceItem);
+                // 频率控制
+                sleep($frequency);
+            }
+
+
+            sleep(25);
         }
         return true;
     }
