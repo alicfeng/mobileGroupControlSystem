@@ -15,7 +15,7 @@ class TaskCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'task:do {help?} {--devices=true} {--taskCode=} {--amount=} {--frequency}';
+    protected $signature = 'task:do {help?} {--devices=true} {--taskCode=} {--amount=} {--frequency=}';
 
     /**
      * The console command description.
@@ -135,15 +135,12 @@ class TaskCommand extends Command
     private function devicesInfo()
     {
         if (null == $this->devices) {
-            while (true) {
-                $devices = $this->deviceService->devicesInfo($this->deviceList);
-                if (false != $devices) {
-                    foreach ($devices as $deviceItem) {
-                        echo time() . "\t" . "{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n";
-                        Log::info("{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n");
-                    }
+            $devices = $this->deviceService->devicesInfo($this->deviceList);
+            if (false != $devices) {
+                foreach ($devices as $deviceItem) {
+                    echo "{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n";
+                    Log::info("{$deviceItem['deviceNo']}\t {$deviceItem['product']}\n");
                 }
-                sleep(1);
             }
             exit(0);
         }

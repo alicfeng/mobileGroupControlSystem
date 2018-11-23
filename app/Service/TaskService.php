@@ -42,7 +42,6 @@ class TaskService
                 sleep($frequency);
             }
 
-
             sleep(25);
         }
         return true;
