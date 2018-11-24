@@ -59,15 +59,31 @@ class TaskQueue implements ShouldQueue
 
     private function scriptHandle()
     {
-        $command = PyCmd::adbRecordPlay($this->playbookPath,$this->device);
+        $lastTs = null;
+        $file = fopen($this->playbookPath, "r") or die("Unable to open file!");
+        // 输出单行直到 end-of-file
+        while (!feof($file)) {
+            $content = fgets($file);
+            if (null == $content || 0 == count(explode(' ', $content))) continue;
+            list($time, $dev, $type, $code, $data) = explode(' ', $content);
+            $time = floatval($time);
+            if ($lastTs and ($time - $lastTs) > 0) {
+                $delta_second = ($time - $lastTs) / 1000;
+                sleep($delta_second);
+            };
+            $lastTs  = $time;
+            $command = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . " sendevent {$dev} {$type} {$code} {$data}";
+            system($command, $status);
+            Log::info($this->device . "\t" . $command . "\t" . "\t" . $status . "\n");
 
-        system($command, $status);
-        Log::info($this->device . "\t" . $command . "\t" . "\t" . $status . "\n");
-        // 指令执行失败 队列失败重试
-        if (0 != $status) {
-            $this->fail();
-            return false;
+            // 指令执行失败 队列失败重试
+            if (0 != $status) {
+                $this->fail();
+                return false;
+            }
         }
+        $lastTs = null;
+        fclose($file);
         return true;
     }
 

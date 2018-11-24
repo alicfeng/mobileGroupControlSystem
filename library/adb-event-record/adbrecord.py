@@ -121,9 +121,9 @@ class AdbEventRecorder(object):
                     ## Write to the file
                     etype, ecode, data = int(etype, 16), int(ecode, 16), int(data, 16)
                     rline = "%s %s %s %s %s\n" % (millis, dev, etype, ecode, data)
-                    if '/dev/input/event0' == dev:
-                        dlog(rline)
-                        outputFile.write(rline)
+                    #if 'if/dev/input/event0' == dev:
+                    dlog(rline)
+                    outputFile.write(rline)
             except KeyboardInterrupt:
                 break
             if len(line) == 0:
