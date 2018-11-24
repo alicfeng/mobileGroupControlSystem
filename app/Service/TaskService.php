@@ -6,12 +6,18 @@
 namespace App\Service;
 
 use App\Common\System\CliLog;
-
-
 use App\Jobs\TaskQueue;
+
 
 class TaskService
 {
+    private $playbookService;
+
+    public function __construct()
+    {
+        $this->playbookService = new PlaybookService;
+    }
+
     /**
      * @functionName   编排任务执行入口
      * @description    编排任务执行入口
@@ -31,6 +37,13 @@ class TaskService
 
         foreach ($devices as $deviceItem) {
             CliLog::info("{$deviceItem} deploying  {$type} \ {$playbook} playbook\n");
+
+            // 判断是否已经完成了 | 仅支持当天
+            if ($this->playbookService->isDone($deviceItem, $playbook,$type)) {
+                CliLog::info("this playbook of task had executed on this device\n");
+                continue;
+            };
+
             // 异步执行 | 提高并发
             TaskQueue::dispatch($type, $playbook, $deviceItem);
             // 频率控制 支持随机时间段

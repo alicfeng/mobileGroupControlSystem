@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Common\Command\AdbCmd;
 use App\Common\Command\PyCmd;
 use App\Common\Constant\TypeTask;
+use App\Common\Database\Redis\SamegoRedis;
 use App\Common\System\CliLog;
 use App\Service\PlaybookService;
 use App\Utils\ObjectUtil;
@@ -27,6 +28,8 @@ class TaskQueue implements ShouldQueue
     private $playbookPath;
     private $device;
 
+    private $result = false;
+
     public function __construct($type, $playbook, $device)
     {
         $this->type         = $type;
@@ -36,18 +39,22 @@ class TaskQueue implements ShouldQueue
     }
 
 
-    public function handle()
+    public function handle(PlaybookService $playbookService)
     {
         switch ($this->type) {
             case TypeTask::SCRIPT:
-                $this->scriptHandle();
+                $this->result = $this->scriptHandle();
                 break;
             case TypeTask::PLAYBOOK:
-                $this->playbookHandle();
+                $this->result = $this->playbookHandle();
                 break;
             default:
                 break;
         }
+        if ($this->result) {
+            $playbookService->setDone($this->device, $this->playbook, $this->type);
+        }
+        return true;
     }
 
     private function scriptHandle()
@@ -59,7 +66,9 @@ class TaskQueue implements ShouldQueue
         // 指令执行失败 队列失败重试
         if (0 != $status) {
             $this->fail();
+            return false;
         }
+        return true;
     }
 
     private function playbookHandle()
@@ -74,10 +83,11 @@ class TaskQueue implements ShouldQueue
         foreach ($executeStepList as $stepItem) {
             $command = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . ' ' . $stepItem->command;
             exec($command, $result, $status);
-            CliLog::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE)."\n");
+            CliLog::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE) . "\n");
             // 指令执行失败 队列失败重试
             if (0 != $status) {
                 $this->fail();
+                return false;
             }
             sleep($stepItem->time);
         }
