@@ -1,4 +1,4 @@
-# phone GCS | 手机群控系统
+# phoneDCS | 手机群控系统
 
 #### 前言
 
