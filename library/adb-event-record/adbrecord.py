@@ -30,6 +30,7 @@ __version__ = '1.0.1'
 EVENT_LINE_RE = re.compile(r"(\S+): (\S+) (\S+) (\S+)$")
 STORE_LINE_RE = re.compile(r"(\S+) (\S+) (\S+) (\S+) (\S+)$")
 
+
 class Colors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
@@ -40,14 +41,18 @@ class Colors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 def dlog(msg):
     print(str(msg))
+
 
 def ilog(msg):
     print(Colors.OKBLUE + str(msg) + Colors.ENDC)
 
+
 def elog(msg):
     print(Colors.FAIL + str(msg) + Colors.ENDC)
+
 
 class AdbEventRecorder(object):
     def __init__(self, adb):
@@ -63,9 +68,9 @@ class AdbEventRecorder(object):
         if subprocess.call(self.adb_shell_command + [b'am', b'start', b'-a', activity]) != 0:
             raise OSError('push failed')
 
-    def checkPermission(self):
+    def checkPermission(self, terminal):
         ilog('Checking permission')
-        if subprocess.call(self.adb_command + [b'root']) != 0:
+        if subprocess.call(self.adb_command + [b'-s'] + [terminal] + [b'root']) != 0:
             raise OSError('Insufficient permissions')
 
     def listAllEvent(self):
@@ -95,9 +100,9 @@ class AdbEventRecorder(object):
             if len(line) == 0:
                 break
 
-    def record(self, fpath, eventNum=None):
+    def record(self, fpath, teminal, eventNum=None):
         ilog('Start recording')
-        record_command = self.adb_shell_command + [b'getevent']
+        record_command = self.adb_command + [b'-s'] + [teminal] + [b'shell'] + [b'getevent']
         adb = subprocess.Popen(record_command,
                                stdin=PIPE, stdout=PIPE,
                                stderr=PIPE)
@@ -116,7 +121,7 @@ class AdbEventRecorder(object):
                     ## Write to the file
                     etype, ecode, data = int(etype, 16), int(ecode, 16), int(data, 16)
                     rline = "%s %s %s %s %s\n" % (millis, dev, etype, ecode, data)
-                    if '/dev/input/event6' != dev:
+                    if '/dev/input/event0' == dev:
                         dlog(rline)
                         outputFile.write(rline)
             except KeyboardInterrupt:
@@ -126,7 +131,7 @@ class AdbEventRecorder(object):
         outputFile.close()
         ilog('End recording')
 
-    def play(self, fpath, repeat=False):
+    def play(self, fpath, terminal, repeat=False):
         ilog('Start playing')
         while True:
             lastTs = None
@@ -140,7 +145,8 @@ class AdbEventRecorder(object):
                         time.sleep(delta_second)
 
                     lastTs = ts
-                    cmds = self.adb_shell_command + [b'sendevent', dev, etype, ecode, data]
+                    cmds = self.adb_command + [b'-s'] + [terminal] + [b'shell'] + [b'sendevent', dev, etype, ecode,
+                                                                                   data]
                     dlog(cmds)
                     if subprocess.call(cmds) != 0:
                         raise OSError('sendevent failed')
@@ -149,10 +155,11 @@ class AdbEventRecorder(object):
                 break
         ilog('End playing')
 
+
 def main(*args):
     parser = argparse.ArgumentParser(
         description='Record events from an Android device')
-    parser.add_argument('-e', '--adb', metavar='COMMAND', default='adb', type=str,
+    parser.add_argument('-e', '--adb', metavar='COMMAND', default='/usr/local/bin/adb', type=str,
                         help='Use the given adb binary and arguments.')
     parser.add_argument('--device', action='store_true',
                         help='Directs command to the only connected USB device; ' +
@@ -171,6 +178,8 @@ def main(*args):
                         help='Play the record data')
     parser.add_argument('--activity', type=str,
                         help='Go the activity when play the record events')
+    parser.add_argument('-t', '--terminal', type=str,
+                        help='device number')
 
     args = parser.parse_args()
     args_encoding = locale.getdefaultlocale()[1]
@@ -181,18 +190,19 @@ def main(*args):
     adb_recorder = AdbEventRecorder(adb)
     adb_recorder.listAllEvent()
     if args.record:
-        adb_recorder.checkPermission()
-        adb_recorder.record(args.record, args.event)
+        adb_recorder.checkPermission(args.terminal)
+        adb_recorder.record(args.record, args.terminal, args.event)
     elif args.play and os.path.exists(args.play):
         if args.activity:
             adb_recorder.goToActivity(args.activity)
-        adb_recorder.play(args.play, args.repeat)
+        adb_recorder.play(args.play, args.terminal, args.repeat)
     elif args.show:
-        adb_recorder.checkPermission()
+        adb_recorder.checkPermission(args.teminal)
         adb_recorder.displayAllEvents()
     else:
         elog('Add -r [Path] to record')
         elog('Add -p [Path] to play')
+
 
 if __name__ == '__main__':
     main(*sys.argv)

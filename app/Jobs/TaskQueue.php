@@ -21,7 +21,7 @@ class TaskQueue implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     // 重试3次
-    protected $tries = 3;
+    protected $tries = 1;
 
     private $playbook;
     private $type;
@@ -52,17 +52,17 @@ class TaskQueue implements ShouldQueue
                 break;
         }
         if ($this->result) {
-            $playbookService->setDone($this->device, $this->playbook, $this->type);
+//            $playbookService->setDone($this->device, $this->playbook, $this->type);
         }
         return true;
     }
 
     private function scriptHandle()
     {
-        $command = PyCmd::adbRecordPlay($this->playbookPath);
+        $command = PyCmd::adbRecordPlay($this->playbookPath,$this->device);
 
-        exec($command, $result, $status);
-        Log::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE));
+        system($command, $status);
+        Log::info($this->device . "\t" . $command . "\t" . "\t" . $status . "\n");
         // 指令执行失败 队列失败重试
         if (0 != $status) {
             $this->fail();
@@ -83,7 +83,7 @@ class TaskQueue implements ShouldQueue
         foreach ($executeStepList as $stepItem) {
             $command = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . ' ' . $stepItem->command;
             exec($command, $result, $status);
-            CliLog::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE) . "\n");
+            CliLog::info($this->device . "\t" . $command . "\t" . $status . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE) . "\t" . $status . "\n");
             // 指令执行失败 队列失败重试
             if (0 != $status) {
                 $this->fail();

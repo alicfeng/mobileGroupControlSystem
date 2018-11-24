@@ -6,12 +6,13 @@
 namespace App\Common\Command;
 
 
+use App\Common\System\CliLog;
+
 class PyCmd
 {
-    const PLAYBOOK_PLAY = '/usr/bin/python ';
-
-    public static function adbRecordPlay($playbook)
+    public static function adbRecordPlay($playbook, $device)
     {
-        return base_path() . '/library/adb-event-record/adbrecord.py -p ' . $playbook;
+        CliLog::info(base_path() . '/library/adb-event-record/adbrecord.py -p ' . $playbook . ' -t ' . $device);
+        return base_path() . '/library/adb-event-record/adbrecord.py -p ' . $playbook . ' -t ' . $device;
     }
 }
