@@ -33,7 +33,7 @@ class TaskService
             CliLog::info("{$deviceItem} deploying  {$type} \ {$playbook} playbook\n");
             // 异步执行 | 提高并发
             TaskQueue::dispatch($type, $playbook, $deviceItem);
-            // 频率控制
+            // 频率控制 支持随机时间段
             if (strpos($frequency, ',') !== false) {
                 list($minTime, $maxTime) = explode(',', $frequency);
                 $frequency = rand(intval($minTime), intval($maxTime));
