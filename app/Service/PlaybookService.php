@@ -14,13 +14,15 @@ class PlaybookService
      * @version        v1.0.0
      * @author         Alicfeng
      * @datetime       18-11-23 下午6:44
-     * @param $playbook
+     * @param string type
+     * @param string $playbook
      * @return string
      * @response       []
      */
-    public static function path($playbook)
+    public static function path($type, $playbook)
     {
-        return base_path() . '/playbook/' . $playbook . '.pb';
+        $suffix = config('playbook.file.suffix.' . $type);
+        return base_path() . DIRECTORY_SEPARATOR . 'playbook' . DIRECTORY_SEPARATOR . $type . DIRECTORY_SEPARATOR  . $playbook . $suffix;
     }
 
     /**
@@ -29,13 +31,14 @@ class PlaybookService
      * @version        v1.0.0
      * @author         Alicfeng
      * @datetime       18-11-23 下午6:42
-     * @param $playbook
+     * @param string $type
+     * @param string $playbook
      * @return bool
      * @response       []
      */
-    public function check($playbook)
+    public function check($type, $playbook)
     {
-        $playbookFile = self::path($playbook);
+        $playbookFile = self::path($type, $playbook);
         return file_exists($playbookFile);
     }
 }

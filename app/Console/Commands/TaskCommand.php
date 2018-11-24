@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Common\Constant\Strings;
+use App\Common\Constant\TypeTask;
 use App\Common\System\CliLog;
 use App\Service\DeviceService;
 use App\Service\PlaybookService;
@@ -12,7 +13,14 @@ use Log;
 
 class TaskCommand extends Command
 {
-    protected $signature = 'task:do {help?} {--devices=true} {--playbook=} {--amount=} {--frequency=}';
+    protected $signature
+                           = 'task:do 
+                           {help?} 
+                           {--devices=true}
+                           {--playbook=} 
+                           {--type=} 
+                           {--amount=} 
+                           {--frequency=}';
     protected $description = 'playbook task run';
 
     private $deviceService;
@@ -21,10 +29,11 @@ class TaskCommand extends Command
     private $deviceList;
 
     private $help      = null;// 帮助
-    private $playbook  = null;// 任务编码
+    private $playbook  = null;// 任务编码 | must | string
+    private $type      = null;// 类型 | must | string | {script:default | playbook}
     private $devices   = true;// 设备
-    private $amount    = 0;// 任务数量
-    private $frequency = 0;// 频率 | 单位s | 默认0s
+    private $amount    = 0;// 任务数量 | must | int
+    private $frequency = 0;// 频率 | optional | 单位s | 默认0s
 
     /**
      * TaskCommand constructor.
@@ -52,7 +61,7 @@ class TaskCommand extends Command
         $this->checkTaskAmount();
         $this->checkPlaybook();
 
-        $this->taskService->run($this->playbook, $this->deviceList, $this->frequency);
+        $this->taskService->run($this->playbook, $this->type, $this->deviceList, $this->frequency);
         return true;
     }
 
@@ -65,6 +74,7 @@ class TaskCommand extends Command
         help
         --devices  view devices main info
         --playbook=playbook code
+        --type=playbook type
         --amount=task amount
         --frequency=execute task frequency | s\n");
     }
@@ -75,6 +85,7 @@ class TaskCommand extends Command
     private function init()
     {
         $this->playbook = $this->option('playbook');
+        $this->type     = $this->option('type');
         $this->amount   = $this->option('amount');
         $frequency      = $this->option('frequency');
         $frequency ? $this->frequency = $frequency : null;
@@ -101,6 +112,15 @@ class TaskCommand extends Command
         if (Strings::NULL == $this->amount || null == $this->amount || !is_numeric($this->amount)) {
             echo "amount can not be empty\n";
             $this->help();
+        }
+
+        // check type
+        if (null == $this->type) {
+            $this->type = TypeTask::SCRIPT;
+        } else {
+            if (!in_array($this->type, [TypeTask::SCRIPT, TypeTask::PLAYBOOK])) {
+                CliLog::info('please check type value~ script:default | playbook');
+            }
         }
     }
 
@@ -168,7 +188,7 @@ class TaskCommand extends Command
      */
     private function checkPlaybook()
     {
-        if (false == $this->playbookService->check($this->playbook)) {
+        if (false == $this->playbookService->check($this->type,$this->playbook)) {
             Log::warning('the task of playbook not exist');
             exit("the task of playbook not exist\n");
         }

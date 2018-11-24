@@ -12,7 +12,9 @@ class AdbCmd
     // 获取设备信息
     const GET_DEVICE_INFO = 'adb -s {deviceNo} shell getprop ro.product.model';
 
-    // adb shell
+    // adb basic
     const BASIC_ADB = 'adb ';
 
+    // adb shell
+    const ADB_SHELL = 'adb -s {deviceNo} shell';
 }

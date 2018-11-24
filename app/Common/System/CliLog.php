@@ -15,12 +15,17 @@ class CliLog
      * @version        v1.0.0
      * @author         Alicfeng
      * @datetime       18-11-23 下午6:46
-     * @param $message
+     * @param mixed $message
+     * @param boolean $exitFlag
      * @response       []
      */
-    public static function info($message)
+    public static function info($message, $exitFlag = false)
     {
-        echo $message;
         Log::info($message);
+        if ($exitFlag) {
+            exit($message);
+        } else {
+            echo $message;
+        }
     }
 }

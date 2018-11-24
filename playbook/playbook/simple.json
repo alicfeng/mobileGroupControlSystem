@@ -1,0 +1,22 @@
+[
+  {
+    "name": "to menu",
+    "command": "input keyevent KEYCODE_HOME",
+    "time": 2
+  },
+  {
+    "name": "open wechat application",
+    "command": "am start com.tencent.mm/com.tencent.mm.ui.LauncherUI",
+    "time": 2
+  },
+  {
+    "name": "call",
+    "command": "input keyevent KEYCODE_CALL",
+    "time": 2
+  },
+  {
+    "name": "back menu",
+    "command": "input keyevent KEYCODE_HOME",
+    "time": 2
+  }
+]
