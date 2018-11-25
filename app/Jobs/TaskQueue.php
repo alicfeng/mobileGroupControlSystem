@@ -82,7 +82,7 @@ class TaskQueue implements ShouldQueue
                 return false;
             }
         }
-        $lastTs = null;
+        $lastTime = null;
         fclose($file);
         return true;
     }
