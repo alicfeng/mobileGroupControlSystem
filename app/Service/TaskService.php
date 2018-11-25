@@ -33,10 +33,10 @@ class TaskService
      */
     public function run($playbook, $type, $devices, $frequency)
     {
-        CliLog::info("{$type} \ {$playbook} playbook running\n");
+        CliLog::info("{$playbook} {$type} playbook running\n");
 
         foreach ($devices as $deviceItem) {
-            CliLog::info("{$deviceItem} deploying  {$type} \ {$playbook} playbook\n");
+            CliLog::info("{$deviceItem} deploying  {$playbook} {$type}  playbook\n");
 
             // 判断是否已经完成了 | 仅支持当天
             if ($this->playbookService->isDone($deviceItem, $playbook,$type)) {
@@ -54,7 +54,7 @@ class TaskService
             sleep($frequency);
         }
 
-        CliLog::info("{$type} \ {$playbook} playbook run finished\n");
+        CliLog::info("{$playbook} {$type} playbook run finished\n");
         return true;
     }
 }

@@ -59,22 +59,22 @@ class TaskQueue implements ShouldQueue
 
     private function scriptHandle()
     {
-        $lastTs = null;
+        $lastTime = 0;
         $file = fopen($this->playbookPath, "r") or die("Unable to open file!");
         // 输出单行直到 end-of-file
         while (!feof($file)) {
             $content = fgets($file);
             if (null == $content || 0 == count(explode(' ', $content))) continue;
             list($time, $dev, $type, $code, $data) = explode(' ', $content);
-            $time = floatval($time);
-            if ($lastTs and ($time - $lastTs) > 0) {
-                $delta_second = ($time - $lastTs) / 1000;
-                sleep($delta_second);
+            $time      = intval($time);//微妙
+            $delayTime = $time - $lastTime;
+            if (0 < $lastTime && 0 < $delayTime) {
+                usleep($delayTime);
             };
-            $lastTs  = $time;
-            $command = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . " sendevent {$dev} {$type} {$code} {$data}";
+            $lastTime = $time;
+            $command  = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . " sendevent {$dev} {$type} {$code} {$data}";
             system($command, $status);
-            Log::info($this->device . "\t" . $command . "\t" . "\t" . $status . "\n");
+            Log::info($this->device . "\t" . $command . "\t" . $status . "\n");
 
             // 指令执行失败 队列失败重试
             if (0 != $status) {
@@ -99,7 +99,7 @@ class TaskQueue implements ShouldQueue
         foreach ($executeStepList as $stepItem) {
             $command = str_replace('{deviceNo}', $this->device, AdbCmd::ADB_SHELL) . ' ' . $stepItem->command;
             exec($command, $result, $status);
-            CliLog::info($this->device . "\t" . $command . "\t" . $status . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE) . "\t" . $status . "\n");
+            CliLog::info($this->device . "\t" . $command . "\t" . json_encode($result, JSON_UNESCAPED_UNICODE) . "\t" . $status . "\n");
             // 指令执行失败 队列失败重试
             if (0 != $status) {
                 $this->fail();

@@ -24,6 +24,7 @@ from subprocess import PIPE
 import sys
 import os
 import time
+import datetime
 
 __version__ = '1.0.1'
 
@@ -110,7 +111,9 @@ class AdbEventRecorder(object):
         outputFile = open(fpath, 'w')
         while adb.poll() is None:
             try:
-                millis = int(round(time.time() * 1000))
+                curTime = str(datetime.datetime.now()).split('.')
+                mTime = str(time.mktime(time.strptime(curTime[0], '%Y-%m-%d %H:%M:%S')))
+                millis = '%s%s' % (mTime.split('.')[0], curTime[1])
                 line = adb.stdout.readline().decode('utf-8', 'replace').strip()
                 match = EVENT_LINE_RE.match(line.strip())
                 if match is not None:
@@ -121,7 +124,7 @@ class AdbEventRecorder(object):
                     ## Write to the file
                     etype, ecode, data = int(etype, 16), int(ecode, 16), int(data, 16)
                     rline = "%s %s %s %s %s\n" % (millis, dev, etype, ecode, data)
-                    #if 'if/dev/input/event0' == dev:
+                    # if 'if/dev/input/event0' == dev:
                     dlog(rline)
                     outputFile.write(rline)
             except KeyboardInterrupt:
